@@ -5,13 +5,6 @@ from src.utils.utils import check_hand_direction
 import mediapipe as mp
 
 
-CAM_W = 640
-CAM_H = 480
-TEXT_COLOR = (243,236,27)
-LM_COLOR = (102,255,255)
-LINE_COLOR = (51,51,51)
-
-
 class DefaultModel(Model):
     def __init__(self, edgetpu, min_tracking_confidence=0.7, min_detection_confidence=0.9):
         super().__init__(edgetpu=edgetpu, 
@@ -31,10 +24,7 @@ class DefaultModel(Model):
 
     def recognize(self, image):
         image = cv2.flip(image, 1)
-
-        self.decoded_hands = None
-        img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        self.results = self.hands.process(img_rgb)
+        self.results = self.hands.process(image)
         
         if self.results.multi_hand_landmarks is not None:
             h, w, _ = image.shape
@@ -75,8 +65,8 @@ class DefaultModel(Model):
         w = debug_image.shape[1]
         t = int(w / 500)
         self.mp_drawing.draw_landmarks(debug_image, landmarks, self.mp_hands.HAND_CONNECTIONS,
-                    self.mp_drawing.DrawingSpec(color=LM_COLOR, thickness=3*t, circle_radius=t),
-                    self.mp_drawing.DrawingSpec(color=LINE_COLOR, thickness=t, circle_radius=t))
+                    self.mp_drawing.DrawingSpec(color=(102,255,255), thickness=3*t, circle_radius=t),
+                    self.mp_drawing.DrawingSpec(color=(51,51,51), thickness=t, circle_radius=t))
         
         return debug_image
 

@@ -19,9 +19,8 @@ def get_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--device", default=0, type=int)
-    parser.add_argument("--width", default=960, help='cap width', type=int)
-    parser.add_argument("--height", default=540, help='cap height', type=int)
-    parser.add_argument("--is_keyboard", help='To use Keyboard control by default', type=bool)
+    parser.add_argument("--width", default=640, help='cap width', type=int)
+    parser.add_argument("--height", default=480, help='cap height', type=int)
     parser.add_argument('--use_static_image_mode', action='store_true', help='True if running on photos')
     parser.add_argument("--min_detection_confidence", default=0.7,
                help='min_detection_confidence',
@@ -29,9 +28,6 @@ def get_args():
     parser.add_argument("--min_tracking_confidence", default=0.5,
                help='min_tracking_confidence',
                type=float)
-    parser.add_argument("--buffer_len",
-               help='Length of gesture buffer',
-               type=int)
     parser.add_argument("-e", "--edge_tpu", action="store_true", help="Enable EdgeTPU compyutations. At least two EdgeTPU devices needs to be connected.")
     parser.add_argument("-c", "--camera_output", action="store_true", help="Turn on camera pereview on the computer.")
     parser.add_argument("-pic", "--pi_camera", action="store_true", help="Extracting data from PiCamera. (Only if additional alterations to the rpi settings had been performed.)")
@@ -48,7 +44,6 @@ def get_args():
 
 def main():
     # init global vars
-    global gesture_buffer
     global gesture_id
 
     # Argument parsing
@@ -79,7 +74,8 @@ def main():
     if args.write_video:
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         current_date = datetime.datetime.now().strftime("%m.%d.%Y_%H.%M.%S")
-        writer = cv2.VideoWriter('%s.avi' % current_date, fourcc, 30, (640, 480)) 
+        writer = cv2.VideoWriter('%s.avi' % current_date, fourcc, 30, (640, 480))
+
     if args.model == 'tello':
         gesture_detector = TelloModel(min_detection_confidence=args.min_detection_confidence, 
                                     min_tracking_confidence=args.min_tracking_confidence, 
@@ -88,14 +84,11 @@ def main():
         gesture_detector = DefaultModel(min_detection_confidence=args.min_detection_confidence, 
                                     min_tracking_confidence=args.min_tracking_confidence, 
                                     edgetpu=args.edge_tpu)
-
-    # FPS Measurement
-    cv_fps_calc = CvFpsCalc(buffer_len=10)
+    cv_fps_calc = CvFpsCalc(buffer_len=5)
 
     while True:
         fps = cv_fps_calc.get()
 
-        # Camera capture
         if args.usb_camera:
             _, image = camera.read()
         elif args.pi_camera:
@@ -104,8 +97,8 @@ def main():
             image.paste(raw_image)
 
             image = np.asarray(image).astype(np.uint8)
-            image = cv2.resize(image, dsize=(640, 480))
 
+        image = cv2.resize(image, dsize=(640, 480))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         debug_image, gesture_id = gesture_detector.recognize(image)
@@ -118,10 +111,8 @@ def main():
 
         if args.camera_output:
             cv2.imshow('Turtle Gestures Control', debug_image)
-
-            # Process Key (ESC: end)
             key = cv2.waitKey(1) & 0xff
-            if key == 27:  # ESC
+            if key == 27:
                 break
 
         if args.write_video:

@@ -65,8 +65,7 @@ class TelloModel(Model):
 
 
     def recognize(self, image):
-        image = cv2.flip(image, 1)
-        debug_image = copy.deepcopy(image)
+        debug_image = cv2.flip(image, 1)
         gesture_id = -1
 
         image.flags.writeable = False
