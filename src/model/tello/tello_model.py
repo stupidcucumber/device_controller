@@ -6,6 +6,7 @@ import itertools
 import csv
 from collections import deque
 import mediapipe as mp
+from pycoral.utils import edgetpu
 
 
 class TelloModel(Model):
@@ -32,11 +33,22 @@ class TelloModel(Model):
             min_tracking_confidence=self.min_tracking_confidence,
         )
 
-        if self.use_edgetpu:
+        if self.use_edgetpu and len(edgetpu.list_edge_tpus()) == 2:
             from src.model.tello.keypoint_classifier.key_point_classifier_edgetpu import KeyPointClassifierEdgeTPU
             from src.model.tello.point_history_classifier.point_history_classifier_edgetpu import PointHistoryClassifierEdgeTPU
 
             keypoint_classifier = KeyPointClassifierEdgeTPU(model_path='src/model/weights/tello_edgetpu_format/keypoint_classifier/keypoint_classifier_int_quantization_edgetpu.tflite')
+            point_history_classifier = PointHistoryClassifierEdgeTPU(model_path='src/model/weights/tello_edgetpu_format/point_history_classifier/point_history_classifier_int_quantization_edgetpu.tflite')
+        elif self.use_edgetpu and len(edgetpu.list_edge_tpus()) == 4:
+            from src.model.tello.keypoint_classifier.key_point_classifier_edgetpu import OptimizedKeyPointClassifierEdgeTPU
+            from src.model.tello.point_history_classifier.point_history_classifier_edgetpu import PointHistoryClassifierEdgeTPU
+
+            keypoint_classifier = [
+                'src/model/weights/tello_edgetpu_format/keypoint_classifier/keypoint_classifier_segment_0_of_2_edgetpu.tflite',
+                'src/model/weights/tello_edgetpu_format/keypoint_classifier/keypoint_classifier_segment_1_of_2_edgetpu.tflite'
+            ]
+
+            keypoint_classifier = OptimizedKeyPointClassifierEdgeTPU(part_1_path=keypoint_classifier[0], part_2_path=keypoint_classifier[1])
             point_history_classifier = PointHistoryClassifierEdgeTPU(model_path='src/model/weights/tello_edgetpu_format/point_history_classifier/point_history_classifier_int_quantization_edgetpu.tflite')
         else:            
             from src.model.tello.keypoint_classifier.keypoint_classifier import KeyPointClassifier

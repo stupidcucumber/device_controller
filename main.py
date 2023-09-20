@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import argparse
 import cv2
 from PIL import Image
@@ -23,19 +21,25 @@ def get_args():
     parser.add_argument("--height", default=480, help='cap height', type=int)
     parser.add_argument('--use_static_image_mode', action='store_true', help='True if running on photos')
     parser.add_argument("--min_detection_confidence", default=0.7,
-               help='min_detection_confidence',
-               type=float)
+                        help='Threshold for detection.', type=float)
     parser.add_argument("--min_tracking_confidence", default=0.5,
-               help='min_tracking_confidence',
-               type=float)
-    parser.add_argument("-e", "--edge_tpu", action="store_true", help="Enable EdgeTPU compyutations. At least two EdgeTPU devices needs to be connected.")
-    parser.add_argument("-c", "--camera_output", action="store_true", help="Turn on camera pereview on the computer.")
-    parser.add_argument("-pic", "--pi_camera", action="store_true", help="Extracting data from PiCamera. (Only if additional alterations to the rpi settings had been performed.)")
-    parser.add_argument("-usbc", "--usb_camera", action="store_true", help="Extracting data from USB-camera.")
-    parser.add_argument("--write_video", action="store_true", help="Write video in the AVI format. Video persists in the current folder.")
-    parser.add_argument("-p", "--port", default="", help="Pass port of the turtle, so that we can operate with her.")
-    parser.add_argument("--speed", default=-1, help="Defines the speed of the movements.")
-    parser.add_argument("--model", default="tello", help="Use Tello model or use other model.")
+                        help='Threshold for tracking.', type=float)
+    parser.add_argument("-e", "--edge_tpu", action="store_true", 
+                        help="Enable EdgeTPU compyutations. At least two EdgeTPU devices needs to be connected.")
+    parser.add_argument("-c", "--camera_output", action="store_true", 
+                        help="Turn on camera pereview on the computer.")
+    parser.add_argument("-pic", "--pi_camera", action="store_true", 
+                        help="Extracting data from PiCamera. (Only if additional alterations to the rpi settings had been performed.)")
+    parser.add_argument("-usbc", "--usb_camera", action="store_true", 
+                        help="Extracting data from USB-camera.")
+    parser.add_argument("--write_video", action="store_true", 
+                        help="Write video in the AVI format. Video persists in the current folder.")
+    parser.add_argument("-p", "--port", default="", 
+                        help="Pass port of the turtle, so that we can operate with her.")
+    parser.add_argument("--speed", default=-1, 
+                        help="Defines the speed of the movements.")
+    parser.add_argument("--model", default="tello", 
+                        help="Use Tello model or use other model.")
 
     args = parser.parse_args()
 
@@ -48,6 +52,7 @@ def main():
 
     # Argument parsing
     args = get_args()
+    width, height = args.width, args.height
 
     controller = None
 
@@ -65,7 +70,7 @@ def main():
     elif args.pi_camera:
         from picamera2 import Picamera2
         camera = Picamera2()
-        camera_config = camera.create_video_configuration({'size': (640, 480)})
+        camera_config = camera.create_video_configuration({'size': (width, height)})
         camera.start()
         time.sleep(1)
 
@@ -74,7 +79,7 @@ def main():
     if args.write_video:
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         current_date = datetime.datetime.now().strftime("%m.%d.%Y_%H.%M.%S")
-        writer = cv2.VideoWriter('%s.avi' % current_date, fourcc, 30, (640, 480))
+        writer = cv2.VideoWriter('%s.avi' % current_date, fourcc, 30, (width, height))
 
     if args.model == 'tello':
         gesture_detector = TelloModel(min_detection_confidence=args.min_detection_confidence, 
@@ -98,7 +103,7 @@ def main():
 
             image = np.asarray(image).astype(np.uint8)
 
-        image = cv2.resize(image, dsize=(640, 480))
+        image = cv2.resize(image, dsize=(width, height))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         debug_image, gesture_id = gesture_detector.recognize(image)
